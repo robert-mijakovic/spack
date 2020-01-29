@@ -3947,6 +3947,14 @@ class SpecLexer(spack.parse.Lexer):
 _lexer = SpecLexer()
 
 
+def add_platform(spec):
+    """If a spec has an os or a target and no platform, give it
+       the default platform."""
+    arch = spec.architecture
+    if arch and not arch.platform and (arch.os or arch.target):
+        spec._set_architecture(platform=spack.architecture.platform().name)
+
+
 class SpecParser(spack.parse.Parser):
 
     def __init__(self, initial_spec=None):
@@ -4054,14 +4062,6 @@ class SpecParser(spack.parse.Parser):
         except spack.parse.ParseError as e:
             raise SpecParseError(e)
 
-        # If the spec has an os or a target and no platform, give it
-        # the default platform
-        platform_default = spack.architecture.platform().name
-        for spec in specs:
-            for s in spec.traverse():
-                if s.architecture and not s.architecture.platform and \
-                        (s.architecture.os or s.architecture.target):
-                    s._set_architecture(platform=platform_default)
         return specs
 
     def spec_from_file(self):
@@ -4193,6 +4193,7 @@ class SpecParser(spack.parse.Parser):
             else:
                 break
 
+        add_platform(spec)
         return spec
 
     def variant(self, name=None):
